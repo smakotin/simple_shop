@@ -51,10 +51,9 @@ class AddProductCartAPI(CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = request.user
         product_id = kwargs['pk']
-        cart_id = self.request.COOKIES.get('cart')
-        if cart_id is None:
-            if user.is_authenticated:
-                cart_id = Cart.objects.filter(user_id=user.pk).first().pk
+        if user.is_authenticated:
+            cart, created = Cart.objects.get_or_create(user_id=user.pk)
+            cart_id = cart.pk
         serializer.save(product_id=product_id, cart_id=cart_id)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
