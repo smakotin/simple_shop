@@ -1,13 +1,6 @@
-from django.contrib.auth.models import Group
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
-from rest_framework.fields import CharField, EmailField, IntegerField
-from rest_framework.serializers import Serializer, ModelSerializer
-from cart.models import Cart
+from rest_framework.fields import CharField
+from rest_framework.serializers import ModelSerializer
 from django.contrib.auth import get_user_model
-
 
 User = get_user_model()
 
