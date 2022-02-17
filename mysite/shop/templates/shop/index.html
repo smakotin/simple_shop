@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+
+{% block sidebar %}
+{% include 'inc/_sidebar.html' %}
+{% endblock %}
+
+
+{% block content %}
+<h1>Главная страница товаров</h1>
+
+<div class="card-group">
+    {% for product in object_list %}
+    <div class="card">
+        {% if product.image %}
+        <img class="card-img-top" src="{{ product.image.url }}" alt="Card image cap">
+        {% else%}
+        <img src="https://picsum.photos/seed/picsum/330/330" alt="">
+        {% endif %}
+        <div class="card-body">
+            <h5 class="card-title">{{ product.title }}</h5>
+            <p class="card-text">This is a wider card with supporting text below as a natural lead-in to additional
+                content. This content is a little bit longer.</p>
+            <p class="card-text"><small class="text-muted">Last updated 3 mins ago</small></p>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+{% endblock %}
