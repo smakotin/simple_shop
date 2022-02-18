@@ -52,9 +52,8 @@ class AddProductCartAPI(ListCreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = request.user
         product_id = kwargs['pk']
-        if user.is_authenticated:
-            cart, created = Cart.objects.get_or_create(user_id=user.pk)
-            cart_id = cart.pk
+        cart, created = Cart.objects.get_or_create(user_id=user.pk)
+        cart_id = cart.pk
         serializer.save(product_id=product_id, cart_id=cart_id)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
@@ -68,11 +67,8 @@ class UpdateProductCartAPI(RetrieveUpdateAPIView):
     def get_queryset(self):
         user = self.request.user
         product_id = self.kwargs['product_id']
-        if user.is_authenticated:
-            cart, created = Cart.objects.get_or_create(user_id=user.pk)
-            cart_id = cart.pk
-        else:
-            return ProductInCart.objects.none()
+        cart, created = Cart.objects.get_or_create(user_id=user.pk)
+        cart_id = cart.pk
         return ProductInCart.objects.filter(cart_id=cart_id, product_id=product_id)
 
 
