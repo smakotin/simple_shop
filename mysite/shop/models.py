@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
@@ -21,4 +23,8 @@ class Product(models.Model):
         return self.title
 
 
-# class Promocode(models.Model): TODO create Promocode model
+class Promocode(models.Model):
+    promocode = models.CharField(max_length=20)
+    expiration_date = models.DateField(default=date.today)
+    discount_percentage = models.PositiveIntegerField(max_length=2, default=0)
+    is_active = models.BooleanField(default=False)
