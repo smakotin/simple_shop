@@ -19,3 +19,6 @@ class Product(models.Model):
 
     def __str__(self):
         return self.title
+
+
+# class Promocode(models.Model): TODO create Promocode model

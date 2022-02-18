@@ -2,9 +2,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView, RetrieveUpdateAPIView, \
     RetrieveDestroyAPIView, ListCreateAPIView
-from rest_framework.permissions import DjangoModelPermissions, AllowAny
+from rest_framework.permissions import DjangoModelPermissions, AllowAny, IsAuthenticated
 from rest_framework.response import Response
-
 from api.serializers import ProductListSerializer, ProductRetrieveSerializer, ProductCreateSerializer, \
     CartSerializer, AddProductCartSerializer, UpdateProductCartSerializer
 from cart.models import ProductInCart, Cart
@@ -27,24 +26,26 @@ class RetrieveAPIProduct(RetrieveAPIView):
 
 class CreateAPIProduct(CreateAPIView):
     serializer_class = ProductCreateSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [DjangoModelPermissions, IsAuthenticated]
     queryset = Product.objects
 
 
 class UpdateApiProduct(RetrieveUpdateAPIView):
     serializer_class = ProductRetrieveSerializer
     queryset = Product.objects.all()
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [DjangoModelPermissions, IsAuthenticated]
 
 
 class DeleteApiProduct(RetrieveDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductRetrieveSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [DjangoModelPermissions, IsAuthenticated]
 
 
-class AddProductCartAPI(CreateAPIView):
+class AddProductCartAPI(ListCreateAPIView):
     serializer_class = AddProductCartSerializer
+    queryset = ProductInCart.objects
+    permission_classes = [DjangoModelPermissions, IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -62,25 +63,23 @@ class AddProductCartAPI(CreateAPIView):
 class UpdateProductCartAPI(RetrieveUpdateAPIView):
     serializer_class = UpdateProductCartSerializer
     lookup_field = "product_id"
+    permission_classes = [DjangoModelPermissions, IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        cart_id = self.request.COOKIES.get('cart')
         product_id = self.kwargs['product_id']
-        if cart_id is None:
-            if user.is_authenticated:
-                cart_id = Cart.objects.filter(user_id=user.pk).first().pk
-            else:
-                return ProductInCart.objects.none()
-        return ProductInCart.objects.filter(product_id=product_id)#TODO check logic
+        if user.is_authenticated:
+            cart, created = Cart.objects.get_or_create(user_id=user.pk)
+            cart_id = cart.pk
+        else:
+            return ProductInCart.objects.none()
+        return ProductInCart.objects.filter(cart_id=cart_id, product_id=product_id)
 
 
 class ListAPICart(ListAPIView):
     serializer_class = CartSerializer
+    permission_classes = [DjangoModelPermissions, IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_authenticated:
-            return ProductInCart.objects.filter(cart__user=user)
-        else:
-            return ProductInCart.objects.all()
+        return ProductInCart.objects.filter(cart__user=user)

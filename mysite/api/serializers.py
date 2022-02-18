@@ -1,8 +1,9 @@
 from django.db.migrations import serializer
 from django.db.models import F
 from django.http import response
-from rest_framework.relations import HyperlinkedIdentityField
-from rest_framework.serializers import ModelSerializer, HyperlinkedModelSerializer, Serializer, IntegerField
+from rest_framework.relations import HyperlinkedIdentityField, StringRelatedField
+from rest_framework.serializers import ModelSerializer, HyperlinkedModelSerializer, Serializer, IntegerField, \
+    RelatedField
 
 from cart.models import ProductInCart, Cart
 from shop.models import Product
@@ -38,7 +39,7 @@ class CartSerializer(ModelSerializer):
 class AddProductCartSerializer(ModelSerializer):
     class Meta:
         model = ProductInCart
-        fields = ['count']
+        exclude = ('product', )
 
 
 class UpdateProductCartSerializer(ModelSerializer):
