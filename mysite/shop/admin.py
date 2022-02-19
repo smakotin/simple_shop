@@ -2,12 +2,12 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
 
-from .models import User, Product
+from .models import User, Product, Promocode
 from django.utils.translation import gettext_lazy as _
 
 
 class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'first_name', 'last_name',  'email', 'phone')
+    list_display = ('username', 'first_name', 'last_name', 'email', 'phone')
     fieldsets = (
         (None, {'fields': ('username', 'password', 'first_name', 'last_name', 'email', 'phone',)}),
         (_('Permissions'), {
@@ -18,7 +18,6 @@ class CustomUserAdmin(UserAdmin):
 
 
 class ProductAdmin(admin.ModelAdmin):
-
     list_display = ('title', 'price', 'image', 'image_show')
     list_filter = ('title', 'price')
     search_fields = ('title', 'price')
@@ -29,7 +28,13 @@ class ProductAdmin(admin.ModelAdmin):
         return None
 
 
+class PromocodeAdmin(admin.ModelAdmin):
+    list_display = ('promocode', 'expiration_date', 'discount_percentage', 'is_active')
+    list_editable = ('is_active',)
+    search_fields = ('promocode', 'expiration_date', 'discount_percentage', 'is_active')
+    list_display_links = ('promocode', 'expiration_date', 'discount_percentage')
 
 
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(Product, ProductAdmin)
+admin.site.register(Promocode, PromocodeAdmin)

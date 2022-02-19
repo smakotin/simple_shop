@@ -44,8 +44,13 @@ class DeleteApiProduct(RetrieveDestroyAPIView):
 
 class AddProductCartAPI(ListCreateAPIView):
     serializer_class = AddProductCartSerializer
-    queryset = ProductInCart.objects
     permission_classes = [DjangoModelPermissions, IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        cart, created = Cart.objects.get_or_create(user_id=user.pk)
+        cart_id = cart.pk
+        return ProductInCart.objects.filter(cart_id=cart_id)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

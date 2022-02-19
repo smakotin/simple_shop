@@ -12,5 +12,6 @@ urlpatterns = [
     path('cart/', ListAPICart.as_view(), name="cart-list"),
     path('cart/add/<int:pk>/', AddProductCartAPI.as_view(), name="add-to-cart"),
     path('cart/change/<int:product_id>/', UpdateProductCartAPI.as_view(), name="update-in-cart"),
+    path('cart/change/<int:product_id>/', UpdateProductCartAPI.as_view(), name="update-in-cart"),
 ]
 

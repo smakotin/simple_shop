@@ -37,9 +37,11 @@ class CartSerializer(ModelSerializer):
 
 
 class AddProductCartSerializer(ModelSerializer):
+    product_id = IntegerField(read_only=True)
+
     class Meta:
         model = ProductInCart
-        exclude = ('product', )
+        fields = ['count', 'product_id', 'cart_id']
 
 
 class UpdateProductCartSerializer(ModelSerializer):
