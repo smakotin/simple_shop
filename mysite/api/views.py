@@ -60,9 +60,12 @@ class AddProductCartAPI(ListCreateAPIView):
         product_id = kwargs['pk']
         cart, created = Cart.objects.get_or_create(user_id=user.pk)
         cart_id = cart.pk
-        serializer.save(product_id=product_id, cart_id=cart_id)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        try:                                                                            #TODO catch exception
+            serializer.save(product_id=product_id, cart_id=cart_id)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        except:
+            Response(status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 class UpdateProductCartAPI(RetrieveUpdateAPIView):
@@ -77,6 +80,23 @@ class UpdateProductCartAPI(RetrieveUpdateAPIView):
         cart_id = cart.pk
         return ProductInCart.objects.filter(cart_id=cart_id, product_id=product_id)
 
+    def update(self, request, *args, **kwargs):
+        if request.POST['count'] == '0':
+            ProductInCart.objects.filter(product_id=kwargs['product_id']).delete()
+            return Response(status=status.HTTP_200_OK)
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
+
 
 class ListAPICart(ListAPIView):
     serializer_class = CartSerializer
@@ -85,16 +105,12 @@ class ListAPICart(ListAPIView):
     def get_queryset(self):
         user = self.request.user
         queryset = ProductInCart.objects.filter(cart__user=user).annotate(
-            total_sum=(F('count') * F('product__price'))
+            total_sum=(F('count') * F('product__price')),
+            product_price=F('product__price')
         )
-
         return queryset
 
     def get_serializer_context(self):
-        """
-        Extra context provided to the serializer class.
-        """
-
         total_cart_sum = ProductInCart.objects.filter(cart__user=self.request.user).annotate(
             total_sum=(F('count') * F('product__price'))
         ).aggregate(total_cart=Sum('total_sum'))['total_cart']
@@ -115,20 +131,20 @@ class ListAPICart(ListAPIView):
 #         )
 #         return query_set
 
-    # def get_serializer_context(self):
-    #     """
-    #     Extra context provided to the serializer class.
-    #     """
-    #
-    #     total_cart_sum = Cart.objects.filter(user=self.request.user).annotate(
-    #         total_sum=(Sum('cart_product_in_cart__count') * Sum('products__price'))
-    #     ).aggregate(total=Sum('total_sum'))['total']
-    #     return {
-    #         'request': self.request,
-    #         'format': self.format_kwarg,
-    #         'view': self,
-    #         'total_cart_sum': total_cart_sum,
-    #     }
+# def get_serializer_context(self):
+#     """
+#     Extra context provided to the serializer class.
+#     """
+#
+#     total_cart_sum = Cart.objects.filter(user=self.request.user).annotate(
+#         total_sum=(Sum('cart_product_in_cart__count') * Sum('products__price'))
+#     ).aggregate(total=Sum('total_sum'))['total']
+#     return {
+#         'request': self.request,
+#         'format': self.format_kwarg,
+#         'view': self,
+#         'total_cart_sum': total_cart_sum,
+#     }
 
 class DeleteProductCartApi(RetrieveDestroyAPIView):
     queryset = ProductInCart.objects

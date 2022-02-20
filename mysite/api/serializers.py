@@ -33,11 +33,12 @@ class ProductCreateSerializer(ModelSerializer):
 class CartSerializer(ModelSerializer):
     total_sum = DecimalField(max_digits=9, decimal_places=2)
     total = SerializerMethodField()
+    product_price = DecimalField(max_digits=9, decimal_places=2)
 
     class Meta:
         model = ProductInCart
         fields = '__all__'
-        extra_fields = ('total_sum', 'total')
+        extra_fields = ('total_sum', 'total', 'product_price')
 
     def get_total(self, obj):
         return self.context['total_cart_sum']

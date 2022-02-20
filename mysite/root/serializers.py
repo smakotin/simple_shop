@@ -33,7 +33,6 @@ User = get_user_model()
 #             password=validated_data['password_1']
 #         )
 #         Cart.objects.create(user=user)
-#         # TODO replace this logic to signal
 #         return user
 
 class UserSerializer(ModelSerializer):
