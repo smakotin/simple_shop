@@ -8,7 +8,7 @@ from api.serializers import ProductListSerializer, ProductRetrieveSerializer, Pr
     CartSerializer, AddProductCartSerializer, UpdateProductCartSerializer, DeleteProductCartSerializer
 from cart.models import ProductInCart, Cart
 from shop.models import Product
-from django.db.models import Sum, F, Prefetch, Count
+from django.db.models import Sum, F
 
 User = get_user_model()
 
@@ -60,7 +60,7 @@ class AddProductCartAPI(ListCreateAPIView):
         product_id = kwargs['pk']
         cart, created = Cart.objects.get_or_create(user_id=user.pk)
         cart_id = cart.pk
-        try:                                                                            #TODO catch exception
+        try:  # TODO catch exception
             serializer.save(product_id=product_id, cart_id=cart_id)
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
@@ -105,15 +105,20 @@ class ListAPICart(ListAPIView):
     def get_queryset(self):
         user = self.request.user
         queryset = ProductInCart.objects.filter(cart__user=user).annotate(
-            total_sum=(F('count') * F('product__price')),
-            product_price=F('product__price')
+            product_price=F('product__price'),
+            amount_with_discount=(
+                    F('count') * F('product__price') * (100 - F('product__discount')) / 100
+            ),
+            amount_without_discount=(F('count') * (F('product__price'))),
         )
         return queryset
 
     def get_serializer_context(self):
         total_cart_sum = ProductInCart.objects.filter(cart__user=self.request.user).annotate(
-            total_sum=(F('count') * F('product__price'))
-        ).aggregate(total_cart=Sum('total_sum'))['total_cart']
+            amount_with_discount=(
+                    F('count') * F('product__price') * (100 - F('product__discount')) / 100
+            )
+        ).aggregate(total_cart=Sum('amount_with_discount'))['total_cart']
         return {
             'request': self.request,
             'format': self.format_kwarg,

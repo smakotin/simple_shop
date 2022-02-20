@@ -1,19 +1,30 @@
 from datetime import date
 
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from phonenumber_field.modelfields import PhoneNumberField
 
 
 class User(AbstractUser):
     phone = PhoneNumberField(verbose_name='Телефон')
-    
+
 
 class Product(models.Model):
     title = models.CharField(max_length=100, verbose_name='Название')
     description = models.TextField(verbose_name='Описание', blank=True)
     price = models.DecimalField(verbose_name='Цена', max_digits=12, decimal_places=2)
     image = models.ImageField(verbose_name='Фото', upload_to='images/%Y/%m/', blank=True)
+    discount = models.DecimalField(
+        default=0,
+        max_digits=5,
+        decimal_places=2,
+        blank=True,
+        validators=[
+            MaxValueValidator(limit_value=99.99, message='Discount must be less than 100'),
+            MinValueValidator(limit_value=0, message='Discount cannot be less than 0'),
+        ]
+    )
 
     class Meta:
         verbose_name = 'Товар'

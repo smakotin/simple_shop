@@ -18,7 +18,8 @@ class CustomUserAdmin(UserAdmin):
 
 
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('title', 'price', 'image', 'image_show')
+    list_display = ('title', 'price', 'image', 'image_show', 'discount')
+    list_editable = ('price', 'discount')
     list_filter = ('title', 'price')
     search_fields = ('title', 'price')
 
