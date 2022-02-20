@@ -8,6 +8,7 @@ from api.serializers import ProductListSerializer, ProductRetrieveSerializer, Pr
     CartSerializer, AddProductCartSerializer, UpdateProductCartSerializer
 from cart.models import ProductInCart, Cart
 from shop.models import Product
+from django.db.models import Sum, F, Prefetch, Count
 
 User = get_user_model()
 
@@ -83,4 +84,49 @@ class ListAPICart(ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return ProductInCart.objects.filter(cart__user=user)
+        queryset = ProductInCart.objects.filter(cart__user=user).annotate(
+            total_sum=(F('count') * F('product__price'))
+        )
+
+        return queryset
+
+    def get_serializer_context(self):
+        """
+        Extra context provided to the serializer class.
+        """
+
+        total_cart_sum = ProductInCart.objects.filter(cart__user=self.request.user).annotate(
+            total_sum=(F('count') * F('product__price'))
+        ).aggregate(total_cart=Sum('total_sum'))['total_cart']
+        return {
+            'request': self.request,
+            'format': self.format_kwarg,
+            'view': self,
+            'total_cart_sum': total_cart_sum,
+        }
+
+
+# class RetrieveCartApi(ListAPIView):
+#     serializer_class = CartSerializer
+#
+#     def get_queryset(self, *args, **kwargs):
+#         query_set = Cart.objects.filter(user=self.request.user).annotate(
+#             total_sum=(Sum('cart_product_in_cart__count') * F('products__price'))
+#         )
+#         return query_set
+
+    # def get_serializer_context(self):
+    #     """
+    #     Extra context provided to the serializer class.
+    #     """
+    #
+    #     total_cart_sum = Cart.objects.filter(user=self.request.user).annotate(
+    #         total_sum=(Sum('cart_product_in_cart__count') * Sum('products__price'))
+    #     ).aggregate(total=Sum('total_sum'))['total']
+    #     return {
+    #         'request': self.request,
+    #         'format': self.format_kwarg,
+    #         'view': self,
+    #         'total_cart_sum': total_cart_sum,
+    #     }
+
