@@ -5,7 +5,7 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView,
 from rest_framework.permissions import DjangoModelPermissions, AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from api.serializers import ProductListSerializer, ProductRetrieveSerializer, ProductCreateSerializer, \
-    CartSerializer, AddProductCartSerializer, UpdateProductCartSerializer
+    CartSerializer, AddProductCartSerializer, UpdateProductCartSerializer, DeleteProductCartSerializer
 from cart.models import ProductInCart, Cart
 from shop.models import Product
 from django.db.models import Sum, F, Prefetch, Count
@@ -130,3 +130,7 @@ class ListAPICart(ListAPIView):
     #         'total_cart_sum': total_cart_sum,
     #     }
 
+class DeleteProductCartApi(RetrieveDestroyAPIView):
+    queryset = ProductInCart.objects
+    serializer_class = DeleteProductCartSerializer
+    permission_classes = [DjangoModelPermissions, IsAuthenticated]

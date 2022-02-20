@@ -1,7 +1,7 @@
 from django.urls import path
 
 from api.views import RetrieveAPIProduct, ListAPIProduct, CreateAPIProduct, AddProductCartAPI, \
-    UpdateApiProduct, DeleteApiProduct, UpdateProductCartAPI, ListAPICart
+    UpdateApiProduct, DeleteApiProduct, UpdateProductCartAPI, ListAPICart, DeleteProductCartApi
 
 urlpatterns = [
     path('products/', ListAPIProduct.as_view(), name="product-list"),
@@ -13,5 +13,6 @@ urlpatterns = [
     # path('cart/', RetrieveCartApi.as_view(), name="cart-list"),
     path('cart/add/<int:pk>/', AddProductCartAPI.as_view(), name="add-to-cart"),
     path('cart/change/<int:product_id>/', UpdateProductCartAPI.as_view(), name="update-in-cart"),
+    path('cart/delete_product/<int:pk>/', DeleteProductCartApi.as_view(), name="delete-in-cart"),
 ]
 

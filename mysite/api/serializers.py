@@ -58,3 +58,9 @@ class UpdateProductCartSerializer(ModelSerializer):
         model = ProductInCart
         fields = ['count', 'product_id', 'cart_id']
 
+
+class DeleteProductCartSerializer(ModelSerializer):
+    class Meta:
+        model = ProductInCart
+        fields = '__all__'
+
