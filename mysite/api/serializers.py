@@ -30,6 +30,12 @@ class ProductCreateSerializer(ModelSerializer):
         fields = ['title', 'description', 'price', 'image']
 
 
+class ProductDiscountSerializer(ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ('discount',)
+
+
 class CartSerializer(ModelSerializer):
     amount_without_discount = DecimalField(max_digits=9, decimal_places=2)
     total = SerializerMethodField()

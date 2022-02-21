@@ -5,7 +5,8 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView,
 from rest_framework.permissions import DjangoModelPermissions, AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from api.serializers import ProductListSerializer, ProductRetrieveSerializer, ProductCreateSerializer, \
-    CartSerializer, AddProductCartSerializer, UpdateProductCartSerializer, DeleteProductCartSerializer
+    CartSerializer, AddProductCartSerializer, UpdateProductCartSerializer, DeleteProductCartSerializer, \
+    ProductDiscountSerializer
 from cart.models import ProductInCart, Cart
 from shop.models import Product
 from django.db.models import Sum, F
@@ -127,31 +128,13 @@ class ListAPICart(ListAPIView):
         }
 
 
-# class RetrieveCartApi(ListAPIView):
-#     serializer_class = CartSerializer
-#
-#     def get_queryset(self, *args, **kwargs):
-#         query_set = Cart.objects.filter(user=self.request.user).annotate(
-#             total_sum=(Sum('cart_product_in_cart__count') * F('products__price'))
-#         )
-#         return query_set
-
-# def get_serializer_context(self):
-#     """
-#     Extra context provided to the serializer class.
-#     """
-#
-#     total_cart_sum = Cart.objects.filter(user=self.request.user).annotate(
-#         total_sum=(Sum('cart_product_in_cart__count') * Sum('products__price'))
-#     ).aggregate(total=Sum('total_sum'))['total']
-#     return {
-#         'request': self.request,
-#         'format': self.format_kwarg,
-#         'view': self,
-#         'total_cart_sum': total_cart_sum,
-#     }
-
 class DeleteProductCartApi(RetrieveDestroyAPIView):
     queryset = ProductInCart.objects
     serializer_class = DeleteProductCartSerializer
+    permission_classes = [DjangoModelPermissions, IsAuthenticated]
+
+
+class ProductDiscountApi(RetrieveUpdateAPIView):
+    queryset = Product.objects
+    serializer_class = ProductDiscountSerializer
     permission_classes = [DjangoModelPermissions, IsAuthenticated]
