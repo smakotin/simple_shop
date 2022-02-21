@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView, RetrieveUpdateAPIView, \
     RetrieveDestroyAPIView, ListCreateAPIView
@@ -6,8 +7,8 @@ from rest_framework.permissions import DjangoModelPermissions, AllowAny, IsAuthe
 from rest_framework.response import Response
 from api.serializers import ProductListSerializer, ProductRetrieveSerializer, ProductCreateSerializer, \
     CartSerializer, AddProductCartSerializer, UpdateProductCartSerializer, DeleteProductCartSerializer, \
-    ProductDiscountSerializer
-from cart.models import ProductInCart, Cart
+    ProductDiscountSerializer, CreateOrderSerializer
+from cart.models import ProductInCart, Cart, Order
 from shop.models import Product
 from django.db.models import Sum, F
 
@@ -65,7 +66,7 @@ class AddProductCartAPI(ListCreateAPIView):
             serializer.save(product_id=product_id, cart_id=cart_id)
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-        except:
+        except IntegrityError:
             Response(status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
@@ -106,6 +107,7 @@ class ListAPICart(ListAPIView):
     def get_queryset(self):
         user = self.request.user
         queryset = ProductInCart.objects.filter(cart__user=user).annotate(
+            product_title=F('product__title'),
             product_price=F('product__price'),
             amount_with_discount=(
                     F('count') * F('product__price') * (100 - F('product__discount')) / 100
@@ -138,3 +140,14 @@ class ProductDiscountApi(RetrieveUpdateAPIView):
     queryset = Product.objects
     serializer_class = ProductDiscountSerializer
     permission_classes = [DjangoModelPermissions, IsAuthenticated]
+
+
+class ActivatePromoCodeApi(RetrieveAPIView):
+    pass
+
+
+class CreateOrderApi(CreateAPIView):
+    queryset = Order.objects
+    serializer_class = CreateOrderSerializer
+    permission_classes = [DjangoModelPermissions, IsAuthenticated]
+

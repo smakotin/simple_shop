@@ -6,7 +6,7 @@ from rest_framework.relations import HyperlinkedIdentityField, StringRelatedFiel
 from rest_framework.serializers import ModelSerializer, HyperlinkedModelSerializer, Serializer, IntegerField, \
     RelatedField, DecimalField, SerializerMethodField
 
-from cart.models import ProductInCart, Cart
+from cart.models import ProductInCart, Cart, Order
 from shop.models import Product
 
 
@@ -37,16 +37,20 @@ class ProductDiscountSerializer(ModelSerializer):
 
 
 class CartSerializer(ModelSerializer):
-    amount_without_discount = DecimalField(max_digits=9, decimal_places=2)
-    total = SerializerMethodField()
+    product_title = CharField()
     product_price = DecimalField(max_digits=9, decimal_places=2)
+    total = SerializerMethodField()
+    amount_without_discount = DecimalField(max_digits=9, decimal_places=2)
     amount_with_discount = DecimalField(max_digits=9, decimal_places=2)
 
     class Meta:
         model = ProductInCart
         fields = '__all__'
         extra_fields = (
-            'amount_without_discount', 'total', 'product_price', 'amount_with_discount'
+            'product_title',
+            'amount_without_discount', 'total', 'product_price',
+            'amount_with_discount',
+
         )
 
     def get_total(self, obj):
@@ -72,5 +76,11 @@ class UpdateProductCartSerializer(ModelSerializer):
 class DeleteProductCartSerializer(ModelSerializer):
     class Meta:
         model = ProductInCart
+        fields = '__all__'
+
+
+class CreateOrderSerializer(ModelSerializer):
+    class Meta:
+        model = Order
         fields = '__all__'
 

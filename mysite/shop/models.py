@@ -34,11 +34,21 @@ class Product(models.Model):
         return self.title
 
 
-class Promocode(models.Model):
-    promocode = models.CharField(max_length=20)
+class PromoCode(models.Model):
+    promo_code = models.CharField(max_length=20)  # TODO
     expiration_date = models.DateField(default=date.today)
-    discount_percentage = models.PositiveIntegerField(default=0)
+    promo_discount = models.DecimalField(
+        default=0,
+        max_digits=5,
+        decimal_places=2,
+        blank=True,
+        validators=[
+            MaxValueValidator(limit_value=99.99, message='Discount must be less than 100'),
+            MinValueValidator(limit_value=0, message='Discount cannot be less than 0'),
+        ]
+    )
     is_active = models.BooleanField(default=False)
+    works_with_discount = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.promocode
+        return self.promo_code

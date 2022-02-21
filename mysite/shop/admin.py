@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
 
-from .models import User, Product, Promocode
+from .models import User, Product, PromoCode
 from django.utils.translation import gettext_lazy as _
 
 
@@ -29,13 +29,13 @@ class ProductAdmin(admin.ModelAdmin):
         return None
 
 
-class PromocodeAdmin(admin.ModelAdmin):
-    list_display = ('promocode', 'expiration_date', 'discount_percentage', 'is_active')
-    list_editable = ('is_active',)
-    search_fields = ('promocode', 'expiration_date', 'discount_percentage', 'is_active')
-    list_display_links = ('promocode', 'expiration_date', 'discount_percentage')
+class PromoCodeAdmin(admin.ModelAdmin):
+    list_display = ('promo_code', 'expiration_date', 'promo_discount', 'is_active')
+    list_editable = ('is_active', 'promo_discount')
+    search_fields = ('promo_code', 'expiration_date', 'promo_discount', 'is_active')
+    list_display_links = ('promo_code', 'expiration_date')
 
 
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(Product, ProductAdmin)
-admin.site.register(Promocode, PromocodeAdmin)
+admin.site.register(PromoCode, PromoCodeAdmin)
