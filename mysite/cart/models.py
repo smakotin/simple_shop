@@ -34,5 +34,4 @@ class Order(models.Model):
     cart = models.ForeignKey(ProductInCart, on_delete=models.CASCADE, related_name='cart_order')
     text = models.TextField(max_length=1000, blank=True)
     promo_code = models.ForeignKey(PromoCode, on_delete=models.CASCADE, blank=True, related_name='promo_code_order')
-
-
+    final_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)

@@ -79,8 +79,14 @@ class DeleteProductCartSerializer(ModelSerializer):
         fields = '__all__'
 
 
+class ClientOrderSerializer(Serializer):
+    promo_code_text = CharField(max_length=20)
+    text = CharField(max_length=20)
+
+
 class CreateOrderSerializer(ModelSerializer):
     class Meta:
         model = Order
-        fields = '__all__'
+        fields = "__all__"
+
 

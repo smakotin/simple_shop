@@ -7,9 +7,9 @@ from rest_framework.permissions import DjangoModelPermissions, AllowAny, IsAuthe
 from rest_framework.response import Response
 from api.serializers import ProductListSerializer, ProductRetrieveSerializer, ProductCreateSerializer, \
     CartSerializer, AddProductCartSerializer, UpdateProductCartSerializer, DeleteProductCartSerializer, \
-    ProductDiscountSerializer, CreateOrderSerializer
+    ProductDiscountSerializer, ClientOrderSerializer, CreateOrderSerializer
 from cart.models import ProductInCart, Cart, Order
-from shop.models import Product
+from shop.models import Product, PromoCode
 from django.db.models import Sum, F
 
 User = get_user_model()
@@ -67,7 +67,7 @@ class AddProductCartAPI(ListCreateAPIView):
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         except IntegrityError:
-            Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+            return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 class UpdateProductCartAPI(RetrieveUpdateAPIView):
@@ -92,11 +92,6 @@ class UpdateProductCartAPI(RetrieveUpdateAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
-        if getattr(instance, '_prefetched_objects_cache', None):
-            # If 'prefetch_related' has been applied to a queryset, we need to
-            # forcibly invalidate the prefetch cache on the instance.
-            instance._prefetched_objects_cache = {}
-
         return Response(serializer.data)
 
 
@@ -110,7 +105,7 @@ class ListAPICart(ListAPIView):
             product_title=F('product__title'),
             product_price=F('product__price'),
             amount_with_discount=(
-                    F('count') * F('product__price') * (100 - F('product__discount')) / 100
+                    F('count') * F('product__price') * (1 - F('product__discount') / 100)
             ),
             amount_without_discount=(F('count') * (F('product__price'))),
         )
@@ -119,7 +114,7 @@ class ListAPICart(ListAPIView):
     def get_serializer_context(self):
         total_cart_sum = ProductInCart.objects.filter(cart__user=self.request.user).annotate(
             amount_with_discount=(
-                    F('count') * F('product__price') * (100 - F('product__discount')) / 100
+                    F('count') * F('product__price') * (1 - F('product__discount') / 100)
             )
         ).aggregate(total_cart=Sum('amount_with_discount'))['total_cart']
         return {
@@ -148,6 +143,35 @@ class ActivatePromoCodeApi(RetrieveAPIView):
 
 class CreateOrderApi(CreateAPIView):
     queryset = Order.objects
-    serializer_class = CreateOrderSerializer
+    serializer_class = ClientOrderSerializer
     permission_classes = [DjangoModelPermissions, IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = request.user
+        cart = user.user_cart.first().cart_product_in_cart.first()
+        promo_code_text = serializer.validated_data['promo_code_text']
+        real_promo_code = PromoCode.objects.get(promo_code__iexact=promo_code_text)
+        promo_code_percent = real_promo_code.promo_discount
+        total_cart_sum = ProductInCart.objects.filter(cart__user=self.request.user).annotate(
+            amount_with_discount=(
+                    F('count') * F('product__price') * (1 - F('product__discount') / 100)
+            )
+        ).aggregate(total_cart=Sum('amount_with_discount'))['total_cart']
+        kwargs = dict(
+            user_id=user.id,
+            cart_id=cart.id,
+            text=serializer.validated_data['text'],
+            promo_code_id=real_promo_code.id
+        )
+        if real_promo_code.is_active:
+            total_with_promo_code = total_cart_sum * (1 - promo_code_percent / 100)
+            kwargs.update(final_amount=total_with_promo_code)
+        else:
+            kwargs.update(final_amount=total_cart_sum)
+        order = Order.objects.create(**kwargs)
+        serializer = CreateOrderSerializer(instance=order)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 

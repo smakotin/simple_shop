@@ -35,7 +35,7 @@ class Product(models.Model):
 
 
 class PromoCode(models.Model):
-    promo_code = models.CharField(max_length=20)  # TODO
+    promo_code = models.CharField(max_length=20)
     expiration_date = models.DateField(default=date.today)
     promo_discount = models.DecimalField(
         default=0,
