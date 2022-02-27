@@ -16,7 +16,7 @@ urlpatterns = [
     path('cart/change/<int:product_id>/', UpdateProductCartAPI.as_view(), name="update-in-cart"),
     path('cart/delete_product/<int:pk>/', DeleteProductCartApi.as_view(), name="delete-in-cart"),
     path('cart/activate_promo_code/', ActivatePromoCodeApi.as_view(), name="activate-promo_code"),
-    path('cart/create_order/', CreateOrderApi.as_view(), name="create_order"),
+    path('cart/create_order/', CreateOrderApi.as_view(), name="create-order"),
 
     path('products/add_discount/<int:pk>/', ProductDiscountApi.as_view(), name="add-discount"),
 ]

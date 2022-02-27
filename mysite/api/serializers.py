@@ -2,11 +2,11 @@ from django.db.migrations import serializer
 from django.db.models import F, Sum
 from django.http import response
 from rest_framework.fields import CharField
-from rest_framework.relations import HyperlinkedIdentityField, StringRelatedField
+from rest_framework.relations import HyperlinkedIdentityField
 from rest_framework.serializers import ModelSerializer, HyperlinkedModelSerializer, Serializer, IntegerField, \
-    RelatedField, DecimalField, SerializerMethodField
+    DecimalField, SerializerMethodField
 
-from cart.models import ProductInCart, Cart, Order
+from cart.models import ProductInCart, Order
 from shop.models import Product
 
 
@@ -15,7 +15,7 @@ class ProductListSerializer(HyperlinkedModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('id', 'title', 'price', 'detail')
+        fields = ('id', 'title', 'price', 'detail', 'discount')
 
 
 class ProductRetrieveSerializer(ModelSerializer):
@@ -80,13 +80,13 @@ class DeleteProductCartSerializer(ModelSerializer):
 
 
 class ClientOrderSerializer(Serializer):
-    promo_code_text = CharField(max_length=20)
+    promo_code_text = CharField(max_length=20, default='-')
     text = CharField(max_length=20)
 
 
 class CreateOrderSerializer(ModelSerializer):
     class Meta:
         model = Order
-        fields = "__all__"
+        fields = ('created_date',)
 
 

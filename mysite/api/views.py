@@ -2,14 +2,17 @@ from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView, RetrieveUpdateAPIView, \
-    RetrieveDestroyAPIView, ListCreateAPIView
+    RetrieveDestroyAPIView, GenericAPIView
+from rest_framework.mixins import CreateModelMixin, UpdateModelMixin
 from rest_framework.permissions import DjangoModelPermissions, AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from api.serializers import ProductListSerializer, ProductRetrieveSerializer, ProductCreateSerializer, \
     CartSerializer, AddProductCartSerializer, UpdateProductCartSerializer, DeleteProductCartSerializer, \
     ProductDiscountSerializer, ClientOrderSerializer, CreateOrderSerializer
+from api.utils import check_promo_code, get_promo_code_percent, get_total_order_sum_with_discount_and_promo_code, \
+    get_total_order_sum_with_promo_code, get_total_order_sum_without_promo_code
 from cart.models import ProductInCart, Cart, Order
-from shop.models import Product, PromoCode
+from shop.models import Product
 from django.db.models import Sum, F
 
 User = get_user_model()
@@ -45,7 +48,7 @@ class DeleteApiProduct(RetrieveDestroyAPIView):
     permission_classes = [DjangoModelPermissions, IsAuthenticated]
 
 
-class AddProductCartAPI(ListCreateAPIView):
+class AddProductCartAPI(CreateAPIView):
     serializer_class = AddProductCartSerializer
     permission_classes = [DjangoModelPermissions, IsAuthenticated]
 
@@ -62,6 +65,7 @@ class AddProductCartAPI(ListCreateAPIView):
         product_id = kwargs['pk']
         cart, created = Cart.objects.get_or_create(user_id=user.pk)
         cart_id = cart.pk
+
         try:  # TODO catch exception
             serializer.save(product_id=product_id, cart_id=cart_id)
             headers = self.get_success_headers(serializer.data)
@@ -149,29 +153,26 @@ class CreateOrderApi(CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = request.user
-        cart = user.user_cart.first().cart_product_in_cart.first()
+        cart = request.user.user_cart.first().cart_product_in_cart.first()
         promo_code_text = serializer.validated_data['promo_code_text']
-        real_promo_code = PromoCode.objects.get(promo_code__iexact=promo_code_text)
-        promo_code_percent = real_promo_code.promo_discount
-        total_cart_sum = ProductInCart.objects.filter(cart__user=self.request.user).annotate(
-            amount_with_discount=(
-                    F('count') * F('product__price') * (1 - F('product__discount') / 100)
-            )
-        ).aggregate(total_cart=Sum('amount_with_discount'))['total_cart']
+        checked_promo_code = check_promo_code(promo_code_text)
+        promo_code_percent = get_promo_code_percent(checked_promo_code)
+        if checked_promo_code:
+            if checked_promo_code.works_with_discount:
+                total_order_sum = get_total_order_sum_with_discount_and_promo_code(request, promo_code_percent)
+            if not checked_promo_code.works_with_discount:
+                total_order_sum = get_total_order_sum_with_promo_code(request, promo_code_percent)
+        else:
+            total_order_sum = get_total_order_sum_without_promo_code(request)
+
         kwargs = dict(
-            user_id=user.id,
+            user_id=request.user.id,
             cart_id=cart.id,
             text=serializer.validated_data['text'],
-            promo_code_id=real_promo_code.id
+            promo_code=checked_promo_code
         )
-        if real_promo_code.is_active:
-            total_with_promo_code = total_cart_sum * (1 - promo_code_percent / 100)
-            kwargs.update(final_amount=total_with_promo_code)
-        else:
-            kwargs.update(final_amount=total_cart_sum)
+        kwargs.update(final_amount=total_order_sum)
         order = Order.objects.create(**kwargs)
         serializer = CreateOrderSerializer(instance=order)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
