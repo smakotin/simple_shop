@@ -1,15 +1,16 @@
+from django.core.mail import send_mail
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView, RetrieveUpdateAPIView, \
-    RetrieveDestroyAPIView, GenericAPIView
-from rest_framework.mixins import CreateModelMixin, UpdateModelMixin
+    RetrieveDestroyAPIView
 from rest_framework.permissions import DjangoModelPermissions, AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from api.serializers import ProductListSerializer, ProductRetrieveSerializer, ProductCreateSerializer, \
     CartSerializer, AddProductCartSerializer, UpdateProductCartSerializer, DeleteProductCartSerializer, \
     ProductDiscountSerializer, ClientOrderSerializer, CreateOrderSerializer
-from api.tasks import add_cel
+from api.tasks import add_cel, send_mail_after_order
 from api.utils import check_promo_code, get_promo_code_percent, get_total_order_sum_with_discount_and_promo_code, \
     get_total_order_sum_with_promo_code, get_total_order_sum_without_promo_code
 from cart.models import ProductInCart, Cart, Order
@@ -155,6 +156,7 @@ class CreateOrderApi(CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         cart = request.user.user_cart.first().cart_product_in_cart.first()
+        # email = request.
         promo_code_text = serializer.validated_data['promo_code_text']
         checked_promo_code = check_promo_code(promo_code_text)
         promo_code_percent = get_promo_code_percent(checked_promo_code)
@@ -172,9 +174,9 @@ class CreateOrderApi(CreateAPIView):
             text=serializer.validated_data['text'],
             promo_code=checked_promo_code
         )
-        add_cel.delay(10)
         kwargs.update(final_amount=total_order_sum)
         order = Order.objects.create(**kwargs)
         serializer = CreateOrderSerializer(instance=order)
+        send_mail_after_order('natulj@bk.ru')
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
