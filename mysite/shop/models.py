@@ -8,6 +8,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 class User(AbstractUser):
     phone = PhoneNumberField(verbose_name='Телефон')
+    email = models.EmailField(verbose_name= 'email address')
 
 
 class Product(models.Model):
