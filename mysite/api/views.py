@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from api.serializers import ProductListSerializer, ProductRetrieveSerializer, ProductCreateSerializer, \
     CartSerializer, AddProductCartSerializer, UpdateProductCartSerializer, DeleteProductCartSerializer, \
     ProductDiscountSerializer, ClientOrderSerializer, CreateOrderSerializer
+from api.tasks import add_cel
 from api.utils import check_promo_code, get_promo_code_percent, get_total_order_sum_with_discount_and_promo_code, \
     get_total_order_sum_with_promo_code, get_total_order_sum_without_promo_code
 from cart.models import ProductInCart, Cart, Order
@@ -171,6 +172,7 @@ class CreateOrderApi(CreateAPIView):
             text=serializer.validated_data['text'],
             promo_code=checked_promo_code
         )
+        add_cel.delay(10)
         kwargs.update(final_amount=total_order_sum)
         order = Order.objects.create(**kwargs)
         serializer = CreateOrderSerializer(instance=order)
