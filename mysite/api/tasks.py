@@ -13,7 +13,7 @@ def add_cel(n):
 @shared_task
 def send_mail_after_order(email):
     subject = 'Thank you for the order'
-    message = 'Text message'
+    message = 'text'
     email_from = settings.EMAIL_HOST_USER
     recipient_list = [email, ]
     send_mail(subject, message, email_from, recipient_list)
