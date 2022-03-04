@@ -1,10 +1,11 @@
+from django.core.validators import MinValueValidator
 from django.db.migrations import serializer
 from django.db.models import F, Sum
 from django.http import response
 from rest_framework.fields import CharField
 from rest_framework.relations import HyperlinkedIdentityField
 from rest_framework.serializers import ModelSerializer, HyperlinkedModelSerializer, Serializer, IntegerField, \
-    DecimalField, SerializerMethodField
+    DecimalField, SerializerMethodField, DateTimeField
 
 from cart.models import ProductInCart, Order
 from shop.models import Product
@@ -82,11 +83,16 @@ class DeleteProductCartSerializer(ModelSerializer):
 class ClientOrderSerializer(Serializer):
     promo_code_text = CharField(max_length=20, default='-')
     text = CharField(max_length=20)
+    date = DateTimeField()
+    notification = IntegerField(validators=[MinValueValidator(1)])
+
 
 
 class CreateOrderSerializer(ModelSerializer):
     class Meta:
         model = Order
         fields = ('created_date',)
+
+
 
 

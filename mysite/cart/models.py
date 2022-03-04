@@ -30,12 +30,15 @@ class ProductInCart(models.Model):
 
 
 class NotificationPeriod(models.Model):
-    minutes = models.PositiveIntegerField()
+    minutes = models.PositiveIntegerField(unique=True)
 
     @classmethod
     def get_default_notification_time(cls):
         obj, created = cls.objects.get_or_create(minutes=30)
         return obj.pk
+
+    def __str__(self):
+        return f'notification period {self.minutes} minutes'
         
         
 class Order(models.Model):

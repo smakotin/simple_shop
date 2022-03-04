@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.safestring import mark_safe
 
-from cart.models import Order
+from cart.models import Order, NotificationPeriod
 from .models import User, Product, PromoCode
 from django.utils.translation import gettext_lazy as _
 
@@ -43,7 +43,13 @@ class OrderAdmin(admin.ModelAdmin):
     list_display_links = ('user',)
 
 
+class NotificationPeriodAdmin(admin.ModelAdmin):
+    list_display = ('id', 'minutes',)
+    list_editable = ('minutes',)
+
+
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(PromoCode, PromoCodeAdmin)
 admin.site.register(Order, OrderAdmin)
+admin.site.register(NotificationPeriod, NotificationPeriodAdmin)

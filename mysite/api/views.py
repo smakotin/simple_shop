@@ -13,7 +13,7 @@ from api.serializers import ProductListSerializer, ProductRetrieveSerializer, Pr
 from api.tasks import add_cel, send_mail_after_order
 from api.utils import check_promo_code, get_promo_code_percent, get_total_order_sum_with_discount_and_promo_code, \
     get_total_order_sum_with_promo_code, get_total_order_sum_without_promo_code
-from cart.models import ProductInCart, Cart, Order
+from cart.models import ProductInCart, Cart, Order, NotificationPeriod
 from shop.models import Product
 from django.db.models import Sum, F
 
@@ -158,6 +158,10 @@ class CreateOrderApi(CreateAPIView):
         cart = request.user.user_cart.first().cart_product_in_cart.first()
         # email = request.
         promo_code_text = serializer.validated_data['promo_code_text']
+        date = serializer.validated_data['date']
+        notification = serializer.validated_data['notification']
+        notification, created = NotificationPeriod.objects.get_or_create(minutes=notification)
+        notification_id = notification.pk
         checked_promo_code = check_promo_code(promo_code_text)
         promo_code_percent = get_promo_code_percent(checked_promo_code)
         if checked_promo_code:
@@ -172,7 +176,9 @@ class CreateOrderApi(CreateAPIView):
             user_id=request.user.id,
             cart_id=cart.id,
             text=serializer.validated_data['text'],
-            promo_code=checked_promo_code
+            promo_code=checked_promo_code,
+            execution_date=date,
+            notification_id=notification_id
         )
         kwargs.update(final_amount=total_order_sum)
         order = Order.objects.create(**kwargs)
