@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.db.models import UniqueConstraint
 
+from cart.utils import default_date_order
 from shop.models import Product, PromoCode
 
 User = get_user_model()
@@ -26,6 +27,15 @@ class ProductInCart(models.Model):
         constraints = [
             UniqueConstraint(fields=['product', 'cart'], name='unique_product')
         ]
+
+
+class NotificationPeriod(models.Model):
+    minutes = models.PositiveIntegerField()
+
+    @classmethod
+    def get_default_notification_time(cls):
+        obj, created = cls.objects.get_or_create(minutes=30)
+        return obj.pk
         
         
 class Order(models.Model):
@@ -34,6 +44,20 @@ class Order(models.Model):
     cart = models.ForeignKey(ProductInCart, on_delete=models.CASCADE, related_name='cart_order')
     text = models.TextField(max_length=1000, blank=True)
     promo_code = models.ForeignKey(
-        PromoCode, on_delete=models.CASCADE, blank=True, null=True, related_name='promo_code_order'
+        PromoCode,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        related_name='promo_code_order'
+    )
+    execution_date = models.DateTimeField(default=default_date_order)
+    notification = models.ForeignKey(
+        NotificationPeriod,
+        on_delete=models.SET_DEFAULT,
+        default=NotificationPeriod.get_default_notification_time
     )
     final_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+
+
+
