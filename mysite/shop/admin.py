@@ -38,7 +38,7 @@ class PromoCodeAdmin(admin.ModelAdmin):
 
 
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('user', 'created_date', 'cart', 'text', 'promo_code', 'final_amount')
+    list_display = ('user', 'created_date', 'cart', 'text', 'promo_code', 'final_amount', 'execution_date')
     search_fields = ('user', 'created_date', 'promo_code')
     list_display_links = ('user',)
 
