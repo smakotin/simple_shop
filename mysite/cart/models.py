@@ -38,7 +38,7 @@ class NotificationPeriod(models.Model):
         return obj.pk
 
     def __str__(self):
-        return f'notification period {self.minutes} minutes'
+        return f'notify {self.minutes} minutes before ordering'
         
         
 class Order(models.Model):

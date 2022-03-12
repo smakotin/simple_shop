@@ -80,18 +80,26 @@ class DeleteProductCartSerializer(ModelSerializer):
         fields = '__all__'
 
 
-class ClientOrderSerializer(Serializer):
-    promo_code_text = CharField(max_length=20, default='-')
-    text = CharField(max_length=20)
-    date = DateTimeField()
-    notification = IntegerField(validators=[MinValueValidator(1)])
 
+# class ClientOrderSerializer(Serializer):
+#     promo_code_text = CharField(max_length=20, default='-')
+#     text = CharField(max_length=20)
+#     date = DateTimeField()
+#     notification = IntegerField(validators=[MinValueValidator(1)])
+#
+#
+# class CreateOrderSerializer(ModelSerializer):
+#     class Meta:
+#         model = Order
+#         fields = ('created_date',)
 
 
 class CreateOrderSerializer(ModelSerializer):
     class Meta:
         model = Order
-        fields = ('created_date',)
+        fields = ('text', 'promo_code', 'execution_date', 'notification')
+
+
 
 
 

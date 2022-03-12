@@ -9,7 +9,7 @@ from rest_framework.permissions import DjangoModelPermissions, AllowAny, IsAuthe
 from rest_framework.response import Response
 from api.serializers import ProductListSerializer, ProductRetrieveSerializer, ProductCreateSerializer, \
     CartSerializer, AddProductCartSerializer, UpdateProductCartSerializer, DeleteProductCartSerializer, \
-    ProductDiscountSerializer, ClientOrderSerializer, CreateOrderSerializer
+    ProductDiscountSerializer, CreateOrderSerializer
 from api.tasks import add_cel, send_mail_after_order
 from api.utils import check_promo_code, get_promo_code_percent, get_total_order_sum_with_discount_and_promo_code, \
     get_total_order_sum_with_promo_code, get_total_order_sum_without_promo_code
@@ -147,37 +147,68 @@ class ActivatePromoCodeApi(RetrieveAPIView):
     pass
 
 
+# class CreateOrderApi(CreateAPIView):
+#     queryset = Order.objects
+#     serializer_class = ClientOrderSerializer
+#     permission_classes = [DjangoModelPermissions, IsAuthenticated]
+#
+#     def create(self, request, *args, **kwargs):
+#         serializer = self.get_serializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         cart = request.user.user_cart.first().cart_product_in_cart.first()
+#         # email = request.
+#         promo_code_text = serializer.validated_data['promo_code_text']
+#         date = serializer.validated_data['date']
+#         notification = serializer.validated_data['notification']
+#         notification, created = NotificationPeriod.objects.get_or_create(minutes=notification)
+#         notification_id = notification.pk
+#         checked_promo_code = check_promo_code(promo_code_text)
+#         promo_code_percent = get_promo_code_percent(checked_promo_code)
+#         if checked_promo_code:
+#             if checked_promo_code.works_with_discount:
+#                 total_order_sum = get_total_order_sum_with_discount_and_promo_code(request, promo_code_percent)
+#             if not checked_promo_code.works_with_discount:
+#                 total_order_sum = get_total_order_sum_with_promo_code(request, promo_code_percent)
+#         else:
+#             total_order_sum = get_total_order_sum_without_promo_code(request)
+#
+#         kwargs = dict(
+#             user_id=request.user.id,
+#             cart_id=cart.id,
+#             text=serializer.validated_data['text'],
+#             promo_code=checked_promo_code,
+#             execution_date=date,
+#             notification_id=notification_id
+#         )
+#         kwargs.update(final_amount=total_order_sum)
+#         order = Order.objects.create(**kwargs)
+#         serializer = CreateOrderSerializer(instance=order)
+#         headers = self.get_success_headers(serializer.data)
+#         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 class CreateOrderApi(CreateAPIView):
     queryset = Order.objects
-    serializer_class = ClientOrderSerializer
+    serializer_class = CreateOrderSerializer
     permission_classes = [DjangoModelPermissions, IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         cart = request.user.user_cart.first().cart_product_in_cart.first()
-        # email = request.
-        promo_code_text = serializer.validated_data['promo_code_text']
-        date = serializer.validated_data['date']
+        promo_code = serializer.validated_data['promo_code']
+        execution_date = serializer.validated_data['execution_date']
         notification = serializer.validated_data['notification']
-        notification, created = NotificationPeriod.objects.get_or_create(minutes=notification)
+        notification, created = NotificationPeriod.objects.get_or_create(minutes=notification.minutes)
         notification_id = notification.pk
-        checked_promo_code = check_promo_code(promo_code_text)
-        promo_code_percent = get_promo_code_percent(checked_promo_code)
-        if checked_promo_code:
-            if checked_promo_code.works_with_discount:
-                total_order_sum = get_total_order_sum_with_discount_and_promo_code(request, promo_code_percent)
-            if not checked_promo_code.works_with_discount:
-                total_order_sum = get_total_order_sum_with_promo_code(request, promo_code_percent)
-        else:
-            total_order_sum = get_total_order_sum_without_promo_code(request)
+        promo_code_percent = get_promo_code_percent(promo_code)
+        total_order_sum = get_total_order_sum_with_discount_and_promo_code(request, promo_code_percent)
 
         kwargs = dict(
             user_id=request.user.id,
             cart_id=cart.id,
             text=serializer.validated_data['text'],
-            promo_code=checked_promo_code,
-            execution_date=date,
+            promo_code=promo_code,
+            execution_date=execution_date,
             notification_id=notification_id
         )
         kwargs.update(final_amount=total_order_sum)
