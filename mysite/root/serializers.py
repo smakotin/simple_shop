@@ -50,3 +50,10 @@ class UserSerializer(ModelSerializer):
         return user
 
 
+class AddSubscribeSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
+
+
+

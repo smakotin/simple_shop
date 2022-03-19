@@ -1,19 +1,21 @@
+from datetime import datetime, timedelta
+
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView, RetrieveUpdateAPIView, \
-    RetrieveDestroyAPIView
+    RetrieveDestroyAPIView, UpdateAPIView
 from rest_framework.permissions import DjangoModelPermissions, AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from api.serializers import ProductListSerializer, ProductRetrieveSerializer, ProductCreateSerializer, \
     CartSerializer, AddProductCartSerializer, UpdateProductCartSerializer, DeleteProductCartSerializer, \
     ProductDiscountSerializer, CreateOrderSerializer
-from api.tasks import add_cel, send_mail_after_order
 from api.utils import check_promo_code, get_promo_code_percent, get_total_order_sum_with_discount_and_promo_code, \
     get_total_order_sum_with_promo_code, get_total_order_sum_without_promo_code
 from cart.models import ProductInCart, Cart, Order, NotificationPeriod
+from root.serializers import AddSubscribeSerializer
 from shop.models import Product
 from django.db.models import Sum, F
 
@@ -197,11 +199,18 @@ class CreateOrderApi(CreateAPIView):
         cart = request.user.user_cart.first().cart_product_in_cart.first()
         promo_code = serializer.validated_data['promo_code']
         execution_date = serializer.validated_data['execution_date']
-        notification = serializer.validated_data['notification']
-        notification, created = NotificationPeriod.objects.get_or_create(minutes=notification.minutes)
+        notification_minutes = serializer.validated_data['notification'].minutes
+        if (datetime.now() + timedelta(minutes=notification_minutes)) > execution_date.replace(tzinfo=None):
+            notification_minutes = 1
+        notification, created = NotificationPeriod.objects.get_or_create(minutes=notification_minutes)
         notification_id = notification.pk
         promo_code_percent = get_promo_code_percent(promo_code)
-        total_order_sum = get_total_order_sum_with_discount_and_promo_code(request, promo_code_percent)
+        if promo_code is None:
+            total_order_sum = get_total_order_sum_without_promo_code(request)
+        elif promo_code.works_with_discount:
+            total_order_sum = get_total_order_sum_with_discount_and_promo_code(request, promo_code_percent)
+        else:
+            total_order_sum = get_total_order_sum_with_promo_code(request, promo_code_percent)
 
         kwargs = dict(
             user_id=request.user.id,
@@ -216,3 +225,9 @@ class CreateOrderApi(CreateAPIView):
         serializer = CreateOrderSerializer(instance=order)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class SubscribeNewsApi(UpdateAPIView):
+    queryset = User.objects.filter #TODO
+    serializer_class = AddSubscribeSerializer
+    permission_classes = [DjangoModelPermissions, IsAuthenticated]

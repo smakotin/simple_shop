@@ -5,12 +5,6 @@ from celery import shared_task
 
 
 @shared_task
-def add_cel(n):
-    sleep(n)
-    print('hellooooooooo')
-
-
-@shared_task
 def send_mail_after_order(email):
     subject = 'Thank you for the order'
     message = 'text'

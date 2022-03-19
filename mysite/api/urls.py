@@ -2,7 +2,7 @@ from django.urls import path
 
 from api.views import RetrieveAPIProduct, ListAPIProduct, CreateAPIProduct, AddProductCartAPI, \
     UpdateApiProduct, DeleteApiProduct, UpdateProductCartAPI, ListAPICart, DeleteProductCartApi, \
-    ProductDiscountApi, ActivatePromoCodeApi, CreateOrderApi
+    ProductDiscountApi, ActivatePromoCodeApi, CreateOrderApi, SubscribeNewsApi
 
 urlpatterns = [
     path('products/', ListAPIProduct.as_view(), name="product-list"),
@@ -19,5 +19,7 @@ urlpatterns = [
     path('cart/create_order/', CreateOrderApi.as_view(), name="create-order"),
 
     path('products/add_discount/<int:pk>/', ProductDiscountApi.as_view(), name="add-discount"),
+
+    path('subscribe_news/<int:pk>/', SubscribeNewsApi.as_view(), name="subscribe-news"),
 ]
 
