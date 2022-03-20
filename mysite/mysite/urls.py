@@ -18,12 +18,14 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 
+from root.views import ActivateUserByEmail
 
 urlpatterns = [
     path('', include('shop.urls')),
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('root/', include('root.urls')),
+    path('auth/activate/<str:uid>/<str:token>/', ActivateUserByEmail.as_view()),
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
 
