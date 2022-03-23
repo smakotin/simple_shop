@@ -1,7 +1,10 @@
 import requests
 from django.http import HttpResponse
+from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from root.serializers import UserSerializer
@@ -28,9 +31,8 @@ class UserDetail(RetrieveAPIView):
 
 class ActivateUserByEmail(APIView):
 
-    def get(self, request, uid, token, format=None):
+    def get(self, request, uid, token):
         payload = {'uid': uid, 'token': token}
-
         url = 'http://localhost:8000/auth/users/activation/'
         response = requests.post(url, data=payload)
         if response.ok:
